@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASL Recognition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #2d3748;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .video-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .video-feed {
+            width: 100%;
+            max-width: 800px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .controls-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .sentence-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .sentence-display h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sentence-text {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 60px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+            backdrop-filter: blur(5px);
+        }
+        
+        .letters-section {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .letters-title {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .letter-item {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            margin: 8px 0;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        .letter-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .letter {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #667eea;
+        }
+        
+        .timestamp {
+            font-size: 0.8rem;
+            color: #718096;
+        }
+        
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.6);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(245, 101, 101, 0.4);
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 101, 101, 0.6);
+        }
+        
+        .manual-input {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .manual-input h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .text-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .text-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .quick-words {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .quick-word {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .quick-word:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        .status-message {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: 500;
+            display: none;
+        }
+        
+        .status-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .status-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #feb2b2;
+        }
+        
+        .no-letters {
+            text-align: center;
+            color: #718096;
+            font-style: italic;
+            padding: 20px;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .buttons-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <h1><i class="fas fa-hands"></i> ASL Recognition</h1>
+                    <p>Advanced Sign Language Recognition with Text-to-Speech</p>
+                </div>
+                <div class="user-info" style="display: flex; gap: 15px; align-items: center;">
+                    <span style="color: #667eea; font-weight: 500;">Welcome, {{ current_user.username }}!</span>
+                    {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary" style="text-decoration: none; font-size: 0.9rem; padding: 8px 16px;">
+                            <i class="fas fa-cog"></i> Admin
+                        </a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger" style="text-decoration: none; font-size: 0.9rem; padding: 8px 16px;">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="video-section">
+                <img src="{{ url_for('video_feed') }}" class="video-feed" alt="ASL Recognition Video Feed">
+            </div>
+            
+            <div class="controls-section">
+                <div class="sentence-display">
+                    <h3><i class="fas fa-comment-dots"></i> Current Sentence</h3>
+                    <div class="sentence-text" id="sentence-display">Start signing to build your sentence...</div>
+                </div>
+                
+                <div class="buttons-grid">
+                    <button class="btn btn-primary" onclick="speakSentence()">
+                        <i class="fas fa-volume-up"></i> Speak
+                    </button>
+                    <button class="btn btn-secondary" onclick="addSpace()">
+                         Space
+                    </button>
+                    <button class="btn btn-danger" onclick="clearSentence()">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                </div>
+                
+                <div class="letters-section">
+                    <h3 class="letters-title"><i class="fas fa-list"></i> Recent Letters</h3>
+                    <div id="letters-list">
+                        <div class="no-letters">No letters detected yet...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="manual-input">
+            <h3><i class="fas fa-keyboard"></i> Quick Text Input</h3>
+            <div class="input-group">
+                <input type="text" class="text-input" id="manual-text" placeholder="Type text to add to sentence...">
+                <button class="btn btn-primary" onclick="addManualText()">
+                    <i class="fas fa-plus"></i> Add
+                </button>
+            </div>
+            <div class="quick-words">
+                <span class="quick-word" onclick="addQuickWord('Hello')">Hello</span>
+                <span class="quick-word" onclick="addQuickWord('Thank you')">Thank you</span>
+                <span class="quick-word" onclick="addQuickWord('Please')">Please</span>
+                <span class="quick-word" onclick="addQuickWord('Sorry')">Sorry</span>
+                <span class="quick-word" onclick="addQuickWord('Yes')">Yes</span>
+                <span class="quick-word" onclick="addQuickWord('No')">No</span>
+                <span class="quick-word" onclick="addQuickWord('Help')">Help</span>
+                <span class="quick-word" onclick="addQuickWord('Good')">Good</span>
+            </div>
+        </div>
+        
+        <div id="status-message" class="status-message"></div>
+    </div>
+
+    <script>
+        // Function to update the letters list
+        function updateLetters() {
+            fetch('/get_letters')
+                .then(response => response.json())
+                .then(data => {
+                    const lettersList = document.getElementById('letters-list');
+                    
+                    if (data.length === 0) {
+                        lettersList.innerHTML = '<div class="no-letters">No letters detected yet...</div>';
+                        return;
+                    }
+                    
+                    lettersList.innerHTML = '';
+                    
+                    // Show letters in reverse order (most recent first)
+                    data.reverse().forEach(item => {
+                        const letterDiv = document.createElement('div');
+                        letterDiv.className = 'letter-item';
+                        letterDiv.innerHTML = `
+                            <span class="letter">${item.letter}</span>
+                            <span class="timestamp">${item.timestamp}</span>
+                        `;
+                        lettersList.appendChild(letterDiv);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching letters:', error);
+                });
+        }
+        
+        // Function to update the sentence display
+        function updateSentence() {
+            fetch('/get_sentence')
+                .then(response => response.json())
+                .then(data => {
+                    const sentenceDisplay = document.getElementById('sentence-display');
+                    if (data.sentence) {
+                        sentenceDisplay.textContent = data.sentence;
+                    } else {
+                        sentenceDisplay.textContent = 'Start signing to build your sentence...';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching sentence:', error);
+                });
+        }
+        
+        // Function to speak the sentence
+        function speakSentence() {
+            fetch('/speak_sentence', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                showStatus(data.message, data.status === 'success' ? 'success' : 'error');
+            })
+            .catch(error => {
+                showStatus('Error speaking sentence', 'error');
+                console.error('Error:', error);
+            });
+        }
+        
+        // Function to clear the sentence
+        function clearSentence() {
+            fetch('/clear_sentence', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                showStatus(data.message, 'success');
+                updateSentence();
+            })
+            .catch(error => {
+                showStatus('Error clearing sentence', 'error');
+                console.error('Error:', error);
+            });
+        }
+        
+        // Function to add space
+        function addSpace() {
+            fetch('/add_space', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateSentence();
+            })
+            .catch(error => {
+                console.error('Error adding space:', error);
+            });
+        }
+        
+        // Function to add manual text
+        function addManualText() {
+            const textInput = document.getElementById('manual-text');
+            const text = textInput.value.trim();
+            
+            if (text) {
+                fetch('/add_manual_text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({text: text})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    showStatus(`Added: "${text}"`, 'success');
+                    textInput.value = '';
+                    updateSentence();
+                })
+                .catch(error => {
+                    showStatus('Error adding text', 'error');
+                    console.error('Error:', error);
+                });
+            }
+        }
+        
+        // Function to add quick words
+        function addQuickWord(word) {
+            fetch('/add_manual_text', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({text: word})
+            })
+            .then(response => response.json())
+            .then(data => {
+                showStatus(`Added: "${word}"`, 'success');
+                updateSentence();
+            })
+            .catch(error => {
+                showStatus('Error adding word', 'error');
+                console.error('Error:', error);
+            });
+        }
+        
+        // Function to show status messages
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status-message');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Allow Enter key to add manual text
+        document.getElementById('manual-text').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addManualText();
+            }
+        });
+        
+        // Update letters and sentence every 1 second for faster response
+        setInterval(updateLetters, 1000);
+        setInterval(updateSentence, 1000);
+        
+        // Initial load
+        updateLetters();
+        updateSentence();
+    </script>
+</body>
+</html>
